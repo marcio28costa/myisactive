@@ -1,0 +1,45 @@
+📘 Projeto: MYISACTIVE
+🔍 Visão Geral
+Sistema de monitoramento customizado, inspirado no "Who Is Active" do SQL Server, adaptado para MySQL 5.7 e 8.0.
+
+🧱 Estrutura
+📂 Base de Dados
+MYISACTIVE – Armazena logs de sessões, locks e estatísticas importantes de performance.
+
+📑 Tabelas Criadas
+Tabela	Finalidade
+LOG_SESSOES_ATIVAS	Captura sessões ativas no MySQL (threads, comandos, tempo, etc.)
+LOG_LOCKS_ATIVOS	Coleta informações de transações envolvidas em locks (bloqueios)
+LOG_ESTATISTICAS_MYSQL	Armazena estatísticas de status do servidor (SHOW GLOBAL STATUS)
+LOG_INNODB_STATUS_LOCK	Armazena a saída do SHOW ENGINE INNODB STATUS quando detectado lock
+
+⚙️ Procedures Principais
+Procedure	Descrição
+CAPTURAR_SESSOES_ATIVAS	Captura e insere sessões ativas no log
+CAPTURAR_LOCKS_ATIVOS	Registra locks ativos, com detalhes de quem está bloqueando
+CAPTURAR_ESTATISTICAS	Coleta principais variáveis de status global e incrementa contadores
+COLETAR_INNODB_STATUS_SE_LOCK	Captura o SHOW ENGINE INNODB STATUS e grava o conteúdo (ideal após detectar locks)
+
+👁️ Views de Apoio
+View	Descrição
+VW_SESSOES_ATIVAS_RESUMO	Resumo por minuto e comando das sessões ativas
+
+⏰ Eventos Agendados
+Evento	Frequência	Ação
+EVT_COLETAR_SESSOES	Personalizável	Coleta sessões ativas (com controle por GET_LOCK)
+EVT_TRUNCAR_LOGS_00H	Segunda-feira 00:00	Faz TRUNCATE nas tabelas de log
+EVT_TRUNCAR_LOGS_08H	Segunda-feira 08:00	Repete o TRUNCATE para garantir limpeza
+
+🛠️ Orientações de Uso
+1.	1. Ativar agendador de eventos no MySQL:
+SET GLOBAL event_scheduler = ON;
+2.	2. Executar a coleta de sessões ativas manualmente ou via evento programado.
+3.	3. Utilizar CAPTURAR_LOCKS_ATIVOS para detectar locks. Caso haja, chame:
+CALL MYISACTIVE.COLETAR_INNODB_STATUS_SE_LOCK();
+4.	4. Analisar dados por views ou exportar para dashboards, como Power BI.
+5.	5. Evitar acúmulo de dados, mantendo os eventos de TRUNCATE ativos semanalmente.
+
+💡 Dicas
+- Adicione índices em colunas de data para melhorar performance.
+- Use particionamento se o volume de dados for muito alto.
+- Automatize alertas para quantidade de sessões ou locks críticos.
